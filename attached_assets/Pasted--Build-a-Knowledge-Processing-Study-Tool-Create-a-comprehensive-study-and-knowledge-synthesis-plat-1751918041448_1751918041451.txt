@@ -1,0 +1,277 @@
+# Build a Knowledge Processing Study Tool
+
+Create a comprehensive study and knowledge synthesis platform that processes external content (articles, podcasts, videos) and enables collaborative learning with AI integration.
+
+## Core Functionality
+
+### 1. Home Page Layout
+- **Header**: "Knowledge Synthesis Hub" with navigation tabs
+- **Main Input Section**:
+  - Large URL input field with placeholder "Paste any link: article, podcast, video..."
+  - Auto-detect content type (show icon: 📄 for articles, 🎧 for audio, 📺 for video)
+  - Large textarea below for "Your takeaways and thoughts..."
+  - "Process Content" button (primary) and "Save Draft" button (secondary)
+
+### 2. Content Processing Pipeline
+**When user submits a link:**
+1. Show loading state with content type detection
+2. Extract content based on type:
+   - **Articles**: Web scrape main content, title, author
+   - **Podcasts/Audio**: Extract audio URL, get metadata
+   - **Videos**: Get transcript if available, video metadata
+3. Call Claude API to analyze content for:
+   - Core concepts and themes
+   - Key insights and arguments
+   - Notable quotes
+   - Related topics
+   - Actionable takeaways
+4. Create OpenAI embeddings for both content and user takeaways
+5. Store in Pinecone vector database
+6. Display processed content in library
+
+### 3. Content Library Interface
+**Left Sidebar Navigation:**
+- "Add Content" (home page)
+- "All Content" (main library)
+- "Recent" (last 10 items)
+- "Categories" (auto-generated tags)
+- "Search" (semantic search box)
+
+**Main Content Area:**
+- Grid/list view toggle
+- Content cards showing:
+  - Content type icon and source domain
+  - Title and brief description
+  - Your takeaway preview (first 100 chars)
+  - Tags (auto-generated + manual)
+  - "Open Discussion" button
+  - Processing date
+- Filters: Content type, date range, tags
+- Sort options: Recent, relevance, most discussed
+
+### 4. Individual Content View
+**Content Header:**
+- Title, source URL (clickable), content type
+- AI-generated tags
+- "Add Manual Tags" button
+- "Share Content" button
+
+**Three-Column Layout:**
+- **Left (30%)**: Original content summary by AI
+- **Center (40%)**: Your takeaways (editable)
+- **Right (30%)**: Discussion panel
+
+### 5. Collaborative Chat System
+**Chat Interface for each content item:**
+- Participant list at top (Nate, Janae, + invite others)
+- Message thread with sender avatars
+- Message types:
+  - User messages (speech bubble)
+  - AI responses (robot icon, different styling)
+- Input box with @ mentions
+- "Bring AI into conversation" button
+- Chat features:
+  - Reply to specific messages
+  - React with emojis
+  - Pin important messages
+  - Export conversation summary
+
+### 6. AI Integration
+**Multiple AI Touchpoints:**
+- Content analysis (automatic via Claude)
+- Chat participation (on-demand via Claude)
+- Semantic search (OpenAI embeddings + Pinecone)
+- Pattern recognition across all content
+- Synthesis suggestions ("You might want to connect this with...")
+
+### 7. Search & Discovery
+**Smart Search Bar:**
+- Semantic search using vector similarity
+- Filter by content type, date, participants
+- Search within takeaways vs original content
+- "Find similar content" suggestions
+- Recent search history
+
+**Discovery Features:**
+- "Related Content" suggestions on each item
+- "Trending topics" in your knowledge base
+- "Unconnected insights" (content without much discussion)
+- Weekly synthesis suggestions
+
+## Technical Requirements
+
+### Backend Architecture
+- **Database**: PostgreSQL for relational data
+- **Vector Storage**: Pinecone for embeddings and semantic search
+- **APIs**: 
+  - Claude.ai for content analysis and chat
+  - OpenAI for embeddings
+  - Web scraping service for article content
+  - YouTube/podcast APIs for metadata
+
+### Frontend Requirements
+- **Framework**: React with TypeScript
+- **Styling**: Tailwind CSS with modern design system
+- **Real-time**: WebSocket integration for live chat
+- **State Management**: React Query for server state
+- **Responsive**: Mobile-friendly design
+
+### Database Schema
+```sql
+-- Content items
+content_items: id, url, title, content_type, raw_content, ai_analysis, embeddings_id, created_at
+
+-- User takeaways
+takeaways: id, content_item_id, user_id, takeaway_text, embeddings_id, created_at, updated_at
+
+-- Chat threads (one per content item)
+chat_threads: id, content_item_id, created_at
+
+-- Chat messages
+chat_messages: id, thread_id, sender_type, sender_name, message_text, parent_message_id, created_at
+
+-- Tags and categories
+content_tags: id, content_item_id, tag_name, tag_type, created_at
+
+-- Users (simple auth)
+users: id, name, email, avatar_url, created_at
+```
+
+## API Integrations Required
+
+### Claude AI Integration
+```javascript
+// Content analysis endpoint
+POST /api/analyze-content
+{
+  "content": "article text...",
+  "contentType": "article",
+  "userTakeaways": "user thoughts..."
+}
+
+// Chat with AI endpoint  
+POST /api/chat/ai-response
+{
+  "threadId": "123",
+  "message": "What are the main themes here?",
+  "context": "previous messages..."
+}
+```
+
+### OpenAI Integration
+```javascript
+// Generate embeddings
+POST /api/embeddings/create
+{
+  "text": "content to embed...",
+  "type": "content" | "takeaway"
+}
+
+// Semantic search
+POST /api/search/semantic
+{
+  "query": "search terms...",
+  "filters": {"contentType": "article"}
+}
+```
+
+### Pinecone Integration
+```javascript
+// Store vectors
+POST /api/vectors/store
+{
+  "id": "content_123",
+  "vector": [0.1, 0.2, ...],
+  "metadata": {"type": "content", "url": "..."}
+}
+
+// Search vectors
+POST /api/vectors/search
+{
+  "vector": [0.1, 0.2, ...],
+  "topK": 10,
+  "filter": {"type": "content"}
+}
+```
+
+## Content Processing Workflows
+
+### Article Processing
+1. Extract clean content using web scraping
+2. Send to Claude for analysis and summary
+3. Generate OpenAI embeddings
+4. Store everything in databases
+5. Auto-generate initial tags
+
+### Podcast Processing
+1. Extract audio URL and metadata
+2. Use transcription service (Whisper API recommended)
+3. Send transcript to Claude for analysis
+4. Generate embeddings for searchable content
+5. Link timestamps to key insights
+
+### Video Processing
+1. Extract video metadata and description
+2. Get transcript if available (YouTube API)
+3. Process transcript through Claude
+4. Create embeddings for semantic search
+5. Link video timestamps to insights
+
+## User Experience Flow
+
+### Content Addition Flow
+1. User pastes link → Auto-detect content type
+2. System processes content → Show progress indicators
+3. AI analysis completes → Show summary
+4. User adds takeaways → Auto-save drafts
+5. Content appears in library → Chat thread created
+6. Suggestions for related content → Enable discovery
+
+### Study Session Flow
+1. Browse library or search for topics
+2. Open content item → See all three panels
+3. Review AI analysis and your takeaways
+4. Start or join discussion → Invite AI when needed
+5. Discover related content → Build knowledge connections
+6. Export insights → Create synthesis documents
+
+## Design Requirements
+
+### Visual Design
+- Clean, modern interface inspired by Notion/Linear
+- Consistent color coding for content types
+- Clear visual hierarchy with proper whitespace
+- Dark/light mode toggle
+- Professional color palette
+
+### Interactive Elements
+- Smooth transitions and micro-interactions
+- Loading states for all async operations
+- Real-time typing indicators in chat
+- Drag-and-drop for organizing content
+- Keyboard shortcuts for power users
+
+### Responsive Design
+- Mobile-first approach
+- Collapsible sidebar on mobile
+- Touch-friendly chat interface
+- Readable text at all screen sizes
+
+## Environment Variables Needed
+```
+CLAUDE_API_KEY=your_claude_api_key
+OPENAI_API_KEY=your_openai_api_key
+PINECONE_API_KEY=your_pinecone_key
+PINECONE_ENVIRONMENT=your_pinecone_env
+DATABASE_URL=postgresql://...
+NEXTAUTH_SECRET=your_auth_secret
+```
+
+## Success Metrics
+- Content processing accuracy and speed
+- User engagement with chat features
+- Semantic search relevance
+- Cross-content connection discovery
+- Knowledge synthesis efficiency
+
+Build this as a production-ready application with proper error handling, loading states, and a polished user experience. Focus on making the content processing pipeline robust and the collaborative features intuitive.
