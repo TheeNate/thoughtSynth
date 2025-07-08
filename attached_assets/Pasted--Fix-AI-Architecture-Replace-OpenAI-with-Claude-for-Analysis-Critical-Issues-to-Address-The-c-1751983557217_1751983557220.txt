@@ -1,0 +1,87 @@
+# Fix AI Architecture: Replace OpenAI with Claude for Analysis
+
+## Critical Issues to Address
+
+The current implementation violates the original specifications. You need to:
+
+1. **Replace OpenAI with Claude for content analysis** - Currently using wrong AI
+2. **Add Pinecone vector database integration** - Currently missing entirely  
+3. **Implement OpenAI embeddings pipeline** - For semantic search only
+4. **Keep OpenAI only for embeddings** - Not for content analysis
+
+## Required Changes
+
+### 1. Add Missing Dependencies
+```bash
+npm install @anthropic-ai/sdk @pinecone-database/pinecone
+```
+
+### 2. Environment Variables to Add
+```
+CLAUDE_API_KEY=your_claude_key_here
+ANTHROPIC_API_KEY=your_anthropic_key_here  
+PINECONE_API_KEY=your_pinecone_key
+PINECONE_ENVIRONMENT=your_pinecone_env
+PINECONE_INDEX_NAME=knowledge-synthesis
+```
+
+### 3. Replace server/services/openai.ts Analysis Function
+
+**Current Problem:** The `analyzeContent` function in `server/services/openai.ts` uses OpenAI GPT-4 for content analysis.
+
+**Fix Required:** 
+- Create new `server/services/claude.ts` file
+- Move `analyzeContent` function to use Claude API instead of OpenAI
+- Keep OpenAI service only for embeddings generation
+- Update all imports in `server/services/contentProcessor.ts` to use Claude service
+
+### 4. Add Pinecone Integration
+
+**Current Problem:** No vector database - content isn't being embedded or stored for semantic search
+
+**Fix Required:**
+- Create `server/services/pinecone.ts` service
+- Add vector storage functions: `storeContentVector`, `storeUserTakeawayVector`
+- Add semantic search function: `searchSimilarContent`
+- Update content processing pipeline to generate embeddings and store in Pinecone
+
+### 5. Update Content Processing Pipeline
+
+**Current Problem:** `processContent` function in `contentProcessor.ts` doesn't create embeddings or store in Pinecone
+
+**Fix Required:**
+- After Claude analysis, generate OpenAI embeddings for content + user takeaways
+- Store embeddings in Pinecone with metadata
+- Add embeddings_id to database content_items table
+
+### 6. Add Semantic Search API Endpoint
+
+**Missing Feature:** No semantic search functionality
+
+**Fix Required:**
+- Create `/api/search/semantic` endpoint
+- Use OpenAI to embed search query
+- Query Pinecone for similar vectors
+- Return relevant content items
+
+## Key Architecture Rules
+
+- **Claude**: Content analysis, chat responses, insight generation
+- **OpenAI**: ONLY for embeddings generation (text-embedding-3-small model)
+- **Pinecone**: Vector storage and semantic search
+- **PostgreSQL**: Structured data storage
+
+## Priority Order
+1. Replace OpenAI analysis with Claude analysis (highest priority)
+2. Add Pinecone integration for vector storage
+3. Add embeddings pipeline using OpenAI
+4. Add semantic search functionality
+
+## Validation
+After changes, verify:
+- Content analysis uses Claude API (not OpenAI chat completions)
+- Embeddings are generated using OpenAI and stored in Pinecone
+- Semantic search works using vector similarity
+- No product endorsements appear in analysis results
+
+Make these changes while preserving all existing UI and database functionality.
