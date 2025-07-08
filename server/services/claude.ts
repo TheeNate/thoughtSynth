@@ -1,8 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({
+if (!process.env.ANTHROPIC_API_KEY) {
+  throw new Error('ANTHROPIC_API_KEY environment variable is required');
+}
+
+const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
-}) : null;
+});
 
 export interface ContentAnalysis {
   coreConcepts: string[];
@@ -19,20 +23,6 @@ export async function analyzeContent(
   content: string,
   userTakeaways?: string
 ): Promise<ContentAnalysis> {
-  // Fallback for missing API key
-  if (!anthropic) {
-    console.warn('ANTHROPIC_API_KEY not provided, using fallback analysis');
-    return {
-      summary: `Analysis of "${title}": This content requires AI analysis. Please provide an ANTHROPIC_API_KEY to enable full content analysis.`,
-      coreConcepts: ['Content Analysis', 'AI Integration', 'Knowledge Synthesis'],
-      keyInsights: ['AI-powered analysis not available', 'Manual review recommended'],
-      notableQuotes: ['API key required for quote extraction'],
-      relatedTopics: ['AI Services', 'Content Processing', 'Knowledge Management'],
-      actionableTakeaways: ['Provide ANTHROPIC_API_KEY to enable analysis'],
-      tags: ['unprocessed', 'manual-review', 'ai-pending'],
-    };
-  }
-
   try {
     const prompt = `
 Analyze the following content and provide a comprehensive breakdown. Focus on extracting meaningful insights and knowledge synthesis opportunities.
@@ -107,11 +97,6 @@ export async function generateChatResponse(
   chatHistory: Array<{ senderType: string; messageText: string }>,
   userMessage: string
 ): Promise<string> {
-  // Fallback for missing API key
-  if (!anthropic) {
-    return `I'm sorry, but I need an ANTHROPIC_API_KEY to provide intelligent chat responses. Currently, I can only acknowledge your message about "${contentTitle}". Please provide the API key to enable full AI chat functionality.`;
-  }
-
   try {
     const historyText = chatHistory
       .map(msg => `${msg.senderType === 'user' ? 'User' : 'AI'}: ${msg.messageText}`)
