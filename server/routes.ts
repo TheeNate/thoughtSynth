@@ -4,7 +4,8 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { processContent, detectContentType } from "./services/contentProcessor";
-import { generateChatResponse } from "./services/openai";
+import { generateChatResponse } from "./services/claude";
+import { searchSimilarContent } from "./services/pinecone";
 import { insertContentItemSchema, insertTakeawaySchema, insertChatMessageSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -122,6 +123,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error searching content:", error);
       res.status(500).json({ message: "Failed to search content" });
+    }
+  });
+
+  // Semantic search endpoint using Pinecone vector search
+  app.get('/api/search/semantic', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const query = req.query.q as string;
+      const limit = parseInt(req.query.limit as string) || 10;
+      
+      if (!query) {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+      
+      const results = await searchSimilarContent(query, userId, limit);
+      res.json(results);
+    } catch (error) {
+      console.error("Error performing semantic search:", error);
+      res.status(500).json({ message: "Failed to perform semantic search" });
     }
   });
 

@@ -35,6 +35,7 @@ export interface IStorage {
   // Takeaway operations
   createTakeaway(takeaway: InsertTakeaway): Promise<Takeaway>;
   updateTakeaway(id: number, text: string): Promise<Takeaway>;
+  updateTakeawayVectorId(id: number, vectorId: string): Promise<Takeaway>;
   getTakeawaysByContent(contentItemId: number): Promise<Takeaway[]>;
 
   // Chat operations
@@ -132,6 +133,15 @@ export class DatabaseStorage implements IStorage {
       .values(takeaway)
       .returning();
     return newTakeaway;
+  }
+
+  async updateTakeawayVectorId(id: number, vectorId: string): Promise<Takeaway> {
+    const [updatedTakeaway] = await db
+      .update(takeaways)
+      .set({ vectorId })
+      .where(eq(takeaways.id, id))
+      .returning();
+    return updatedTakeaway;
   }
 
   async updateTakeaway(id: number, text: string): Promise<Takeaway> {

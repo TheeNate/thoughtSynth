@@ -44,6 +44,7 @@ export const contentItems = pgTable("content_items", {
   rawContent: text("raw_content"),
   aiAnalysis: jsonb("ai_analysis"), // Store AI analysis as JSON
   userId: varchar("user_id").notNull(),
+  vectorId: varchar("vector_id", { length: 100 }), // Pinecone vector ID for semantic search
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -54,6 +55,7 @@ export const takeaways = pgTable("takeaways", {
   contentItemId: integer("content_item_id").notNull(),
   userId: varchar("user_id").notNull(),
   takeawayText: text("takeaway_text").notNull(),
+  vectorId: varchar("vector_id", { length: 100 }), // Pinecone vector ID for semantic search
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -36,15 +36,17 @@ This is a comprehensive study and knowledge synthesis platform built with React,
 ### Content Processing Pipeline
 1. **Content Detection**: Automatically identifies content type (article, podcast, video)
 2. **Content Extraction**: Web scraping and metadata extraction
-3. **AI Analysis**: OpenAI GPT-4 analysis for insights, concepts, and takeaways
-4. **Embeddings**: Vector embeddings for semantic search
-5. **Storage**: Structured data storage with full-text search capabilities
+3. **AI Analysis**: Claude 3.5 Sonnet analysis for insights, concepts, and takeaways
+4. **Embeddings**: OpenAI text-embedding-3-small for vector generation
+5. **Vector Storage**: Pinecone database for semantic search capabilities
+6. **Storage**: Structured data storage with PostgreSQL and vector metadata
 
 ### AI Integration
-- **Primary AI**: OpenAI GPT-4 for content analysis
+- **Primary AI**: Claude 3.5 Sonnet for content analysis and chat responses
 - **Analysis Features**: Core concepts, key insights, notable quotes, related topics, actionable takeaways
-- **Chat AI**: Conversational AI for discussing content
-- **Embeddings**: Semantic search using OpenAI embeddings
+- **Chat AI**: Claude-powered conversational AI for discussing content
+- **Embeddings**: OpenAI text-embedding-3-small for semantic search only
+- **Vector Database**: Pinecone for storing and searching content embeddings
 
 ### Real-time Features
 - **WebSocket Chat**: Real-time messaging for content discussions
@@ -109,7 +111,11 @@ This is a comprehensive study and knowledge synthesis platform built with React,
 
 ### Environment Variables
 - `DATABASE_URL`: PostgreSQL connection string
-- `OPENAI_API_KEY`: OpenAI API authentication
+- `ANTHROPIC_API_KEY`: Claude API for content analysis and chat
+- `OPENAI_API_KEY`: OpenAI API for embeddings only
+- `PINECONE_API_KEY`: Pinecone vector database authentication
+- `PINECONE_ENVIRONMENT`: Pinecone environment configuration
+- `PINECONE_INDEX_NAME`: Pinecone index name for vectors
 - `SESSION_SECRET`: Session encryption key
 - `REPLIT_DOMAINS`: Authentication domains
 - `ISSUER_URL`: OAuth issuer URL
@@ -126,6 +132,7 @@ This is a comprehensive study and knowledge synthesis platform built with React,
 ```
 Changelog:
 - July 07, 2025. Initial setup
+- July 08, 2025. Fixed AI architecture - replaced OpenAI analysis with Claude, added Pinecone vector database, OpenAI now only for embeddings
 ```
 
 ## User Preferences

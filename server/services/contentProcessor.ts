@@ -1,4 +1,5 @@
-import { analyzeContent } from "./openai";
+import { analyzeContent } from "./claude";
+import { storeContentVector } from "./pinecone";
 import { storage } from "../storage";
 import { InsertContentItem, InsertContentTag } from "@shared/schema";
 
@@ -81,8 +82,8 @@ export async function processContent(request: ProcessContentRequest): Promise<Pr
     // Extract content from URL
     const { title, content } = await extractContentFromUrl(url, contentType);
     
-    // Analyze content with AI
-    const analysis = await analyzeContent(content, contentType, userTakeaways);
+    // Analyze content with Claude AI
+    const analysis = await analyzeContent(title, content, userTakeaways);
     
     // Create content item
     const contentItemData: InsertContentItem = {
@@ -95,6 +96,25 @@ export async function processContent(request: ProcessContentRequest): Promise<Pr
     };
     
     const contentItem = await storage.createContentItem(contentItemData);
+    
+    // Store content vector in Pinecone for semantic search
+    try {
+      const vectorId = await storeContentVector(
+        contentItem.id,
+        title,
+        content,
+        analysis,
+        userId,
+        url,
+        contentType
+      );
+      
+      // Update content item with vector ID
+      await storage.updateContentItem(contentItem.id, { vectorId });
+    } catch (error) {
+      console.error('Error storing content vector:', error);
+      // Continue execution even if vector storage fails
+    }
     
     // Create tags
     const tagPromises = analysis.tags.map(tag => 
@@ -109,11 +129,28 @@ export async function processContent(request: ProcessContentRequest): Promise<Pr
     
     // Create takeaway if provided
     if (userTakeaways) {
-      await storage.createTakeaway({
+      const takeaway = await storage.createTakeaway({
         contentItemId: contentItem.id,
         userId,
         takeawayText: userTakeaways
       });
+      
+      // Store takeaway vector in Pinecone
+      try {
+        const { storeUserTakeawayVector } = await import('./pinecone');
+        const takeawayVectorId = await storeUserTakeawayVector(
+          contentItem.id,
+          takeaway.id,
+          userTakeaways,
+          title,
+          userId
+        );
+        
+        await storage.updateTakeawayVectorId(takeaway.id, takeawayVectorId);
+      } catch (error) {
+        console.error('Error storing takeaway vector:', error);
+        // Continue execution even if vector storage fails
+      }
     }
     
     // Create chat thread
