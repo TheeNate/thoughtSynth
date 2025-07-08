@@ -1,8 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Headphones, Play, MessageSquare } from "lucide-react";
+import { FileText, Headphones, Play, MessageSquare, Trash2 } from "lucide-react";
 import { Link } from "wouter";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface ContentCardProps {
   content: {
@@ -16,9 +19,47 @@ interface ContentCardProps {
     tags?: string[];
     commentCount?: number;
   };
+  onDelete?: (contentId: number) => void;
 }
 
-export default function ContentCard({ content }: ContentCardProps) {
+export default function ContentCard({ content, onDelete }: ContentCardProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast();
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isDeleting) return;
+    
+    setIsDeleting(true);
+    
+    try {
+      await apiRequest(`/api/content/${content.id}`, {
+        method: "DELETE",
+      });
+      
+      // Invalidate the content list cache
+      queryClient.invalidateQueries({ queryKey: ['/api/content'] });
+      
+      if (onDelete) {
+        onDelete(content.id);
+      }
+      
+      toast({
+        title: "Content deleted",
+        description: "The content has been successfully removed from your library.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete content. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   const getContentIcon = (type: string) => {
     switch (type) {
       case "article":
@@ -80,12 +121,23 @@ export default function ContentCard({ content }: ContentCardProps) {
               {getDomain(content.url)}
             </p>
           </div>
-          <Badge 
-            variant="secondary" 
-            className="text-xs bg-muted/20 dark:bg-gray-800/20 text-muted-foreground dark:text-gray-400"
-          >
-            {content.contentType}
-          </Badge>
+          <div className="flex items-center space-x-2">
+            <Badge 
+              variant="secondary" 
+              className="text-xs bg-muted/20 dark:bg-gray-800/20 text-muted-foreground dark:text-gray-400"
+            >
+              {content.contentType}
+            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* User Takeaway Preview */}

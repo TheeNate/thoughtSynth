@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Grid, List, FileText, Headphones, Play } from "lucide-react";
 import ContentCard from "./ContentCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { queryClient } from "@/lib/queryClient";
 
 export default function ContentLibrary() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -156,7 +157,10 @@ export default function ContentLibrary() {
               : "space-y-4"
           }>
             {filteredContent.map((content: any) => (
-              <ContentCard key={content.id} content={content} />
+              <ContentCard key={content.id} content={content} onDelete={() => {
+                // Refetch content list after deletion
+                queryClient.invalidateQueries({ queryKey: ['/api/content'] });
+              }} />
             ))}
           </div>
         )}

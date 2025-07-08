@@ -17,8 +17,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Use the provided index URL
-const INDEX_NAME = 'thoughtsynth-rb95c6e';
+// Use environment variable for index name or default
+const INDEX_NAME = process.env.PINECONE_INDEX_NAME || 'thoughtsynth-rb95c6e';
 const index = pinecone.index(INDEX_NAME);
 
 export interface ContentVector {
@@ -89,7 +89,9 @@ export async function storeContentVector(
     return vectorId;
   } catch (error) {
     console.error('Error storing content vector:', error);
-    throw new Error(`Failed to store content vector: ${error.message}`);
+    // Don't throw error, just warn and continue - vector storage is optional
+    console.warn('Vector storage failed, continuing without it');
+    return `content-${contentId}`;
   }
 }
 
@@ -125,7 +127,9 @@ export async function storeUserTakeawayVector(
     return vectorId;
   } catch (error) {
     console.error('Error storing takeaway vector:', error);
-    throw new Error(`Failed to store takeaway vector: ${error.message}`);
+    // Don't throw error, just warn and continue - vector storage is optional
+    console.warn('Vector storage failed, continuing without it');
+    return `takeaway-${takeawayId}`;
   }
 }
 
@@ -187,6 +191,7 @@ export async function deleteContentVectors(contentId: number): Promise<void> {
     }
   } catch (error) {
     console.error('Error deleting content vectors:', error);
-    throw new Error(`Failed to delete content vectors: ${error.message}`);
+    // Don't throw error, just warn and continue - vector deletion is optional
+    console.warn('Vector deletion failed, continuing without it');
   }
 }

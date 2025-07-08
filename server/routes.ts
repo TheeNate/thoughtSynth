@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { processContent, detectContentType } from "./services/contentProcessor";
 import { generateChatResponse } from "./services/claude";
-import { searchSimilarContent } from "./services/pinecone";
+import { searchSimilarContent, deleteContentVectors } from "./services/pinecone";
 import { insertContentItemSchema, insertTakeawaySchema, insertChatMessageSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -106,6 +106,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching content item:", error);
       res.status(500).json({ message: "Failed to fetch content item" });
+    }
+  });
+
+  app.delete('/api/content/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const contentId = parseInt(req.params.id);
+      
+      const contentItem = await storage.getContentItem(contentId);
+      if (!contentItem) {
+        return res.status(404).json({ message: "Content not found" });
+      }
+      
+      // Check if user owns this content
+      if (contentItem.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      // Delete from vector database first (if it exists)
+      try {
+        await deleteContentVectors(contentId);
+      } catch (error) {
+        console.warn("Failed to delete from vector database, continuing:", error);
+      }
+      
+      // Delete from regular database
+      await storage.deleteContentItem(contentId);
+      
+      res.json({ message: "Content deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting content:", error);
+      res.status(500).json({ message: "Failed to delete content" });
     }
   });
 
