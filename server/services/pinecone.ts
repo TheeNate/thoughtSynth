@@ -11,6 +11,7 @@ if (!process.env.OPENAI_API_KEY) {
 
 const pinecone = new Pinecone({
   apiKey: process.env.PINECONE_API_KEY,
+  controllerHostUrl: 'https://thought-synth-rb95c6e.svc.aped-4627-b74a.pinecone.io'
 });
 
 const openai = new OpenAI({
