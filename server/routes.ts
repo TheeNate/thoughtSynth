@@ -258,7 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/chat/:contentId/ai-response', isAuthenticated, async (req: any, res) => {
     try {
       const contentId = parseInt(req.params.contentId);
-      const { message, context } = req.body;
+      const { message } = req.body;
       
       // Get content item for context
       const contentItem = await storage.getContentItem(contentId);
@@ -266,15 +266,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Content not found" });
       }
       
-      // Generate AI response
-      const contentSummary = contentItem.aiAnalysis?.summary || contentItem.title;
-      const aiResponse = await generateChatResponse(message, context, contentSummary);
-      
-      // Get or create chat thread
+      // Get chat history for context
       let thread = await storage.getChatThread(contentId);
       if (!thread) {
         thread = await storage.createChatThread(contentId);
       }
+      const chatHistory = await storage.getChatMessages(thread.id);
+      
+      // Generate AI response
+      const contentSummary = contentItem.aiAnalysis?.summary || contentItem.title;
+      const aiResponse = await generateChatResponse(
+        contentItem.title,
+        contentSummary,
+        chatHistory,
+        message
+      );
       
       // Save AI response as message
       const messageData = {

@@ -98,7 +98,9 @@ export async function generateChatResponse(
   userMessage: string
 ): Promise<string> {
   try {
-    const historyText = chatHistory
+    // Ensure chatHistory is an array
+    const safeHistory = Array.isArray(chatHistory) ? chatHistory : [];
+    const historyText = safeHistory
       .map(msg => `${msg.senderType === 'user' ? 'User' : 'AI'}: ${msg.messageText}`)
       .join('\n');
 
