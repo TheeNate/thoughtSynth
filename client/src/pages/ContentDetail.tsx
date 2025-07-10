@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   FileText, 
   Headphones, 
@@ -17,7 +18,10 @@ import {
   Share, 
   Bot,
   User,
-  Quote
+  Quote,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare
 } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +29,8 @@ import { useToast } from "@/hooks/use-toast";
 export default function ContentDetail() {
   const { id } = useParams();
   const [takeawayText, setTakeawayText] = useState("");
+  const [aiAnalysisOpen, setAiAnalysisOpen] = useState(false);
+  const [takeawaysOpen, setTakeawaysOpen] = useState(false);
   const { toast } = useToast();
 
   const { data: content, isLoading, error } = useQuery({
@@ -79,14 +85,12 @@ export default function ContentDetail() {
             <Skeleton className="h-8 w-96 mb-2" />
             <Skeleton className="h-4 w-64" />
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-4">
-              <Skeleton className="h-96 w-full" />
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+            <div className="xl:col-span-1 space-y-4">
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
             </div>
-            <div className="lg:col-span-4">
-              <Skeleton className="h-96 w-full" />
-            </div>
-            <div className="lg:col-span-4">
+            <div className="xl:col-span-3">
               <Skeleton className="h-96 w-full" />
             </div>
           </div>
@@ -154,10 +158,20 @@ export default function ContentDetail() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setAiAnalysisOpen(!aiAnalysisOpen)}
               className="bg-muted dark:bg-dark-border hover:bg-muted/80 dark:hover:bg-dark-border/80 text-muted-foreground dark:text-gray-300"
             >
-              <Tag className="h-4 w-4 mr-2" />
-              Add Tags
+              <Bot className="h-4 w-4 mr-2" />
+              {aiAnalysisOpen ? 'Hide' : 'Show'} AI Analysis
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTakeawaysOpen(!takeawaysOpen)}
+              className="bg-muted dark:bg-dark-border hover:bg-muted/80 dark:hover:bg-dark-border/80 text-muted-foreground dark:text-gray-300"
+            >
+              <User className="h-4 w-4 mr-2" />
+              {takeawaysOpen ? 'Hide' : 'Show'} Takeaways
             </Button>
             <Button
               size="sm"
@@ -184,19 +198,32 @@ export default function ContentDetail() {
           </div>
         )}
 
-        {/* Three Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* New Layout: Collapsible Sidebar + Main Discussion */}
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           
-          {/* AI Analysis Column */}
-          <div className="lg:col-span-4">
-            <Card className="bg-background dark:bg-dark-bg border-border dark:border-dark-border h-full">
-              <CardHeader>
-                <CardTitle className="text-foreground dark:text-white flex items-center">
-                  <Bot className="h-5 w-5 text-accent mr-2" />
-                  AI Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          {/* Collapsible Sections Sidebar */}
+          <div className="xl:col-span-1 space-y-4">
+            
+            {/* AI Analysis - Collapsible */}
+            <Collapsible open={aiAnalysisOpen} onOpenChange={setAiAnalysisOpen}>
+              <Card className="bg-background dark:bg-dark-bg border-border dark:border-dark-border">
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer hover:bg-muted/50 dark:hover:bg-gray-800/50 transition-colors">
+                    <CardTitle className="text-foreground dark:text-white flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Bot className="h-5 w-5 text-accent mr-2" />
+                        AI Analysis
+                      </div>
+                      {aiAnalysisOpen ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="space-y-4">
                 {content.aiAnalysis ? (
                   <>
                     {/* Core Concepts */}
@@ -270,41 +297,64 @@ export default function ContentDetail() {
                     </p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+
+            {/* Your Takeaways - Collapsible */}
+            <Collapsible open={takeawaysOpen} onOpenChange={setTakeawaysOpen}>
+              <Card className="bg-background dark:bg-dark-bg border-border dark:border-dark-border">
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer hover:bg-muted/50 dark:hover:bg-gray-800/50 transition-colors">
+                    <CardTitle className="text-foreground dark:text-white flex items-center justify-between">
+                      <div className="flex items-center">
+                        <User className="h-5 w-5 text-primary mr-2" />
+                        Your Takeaways
+                      </div>
+                      {takeawaysOpen ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent>
+                    <Textarea
+                      value={takeawayText}
+                      onChange={(e) => setTakeawayText(e.target.value)}
+                      placeholder="Add your thoughts and insights..."
+                      className="min-h-[200px] resize-none bg-background dark:bg-dark-surface border-border dark:border-dark-border text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-400"
+                    />
+                    <div className="mt-4">
+                      <Button
+                        size="sm"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                      >
+                        Save Changes
+                      </Button>
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
           </div>
 
-          {/* User Takeaways Column */}
-          <div className="lg:col-span-4">
+          {/* Main Discussion Area */}
+          <div className="xl:col-span-3">
             <Card className="bg-background dark:bg-dark-bg border-border dark:border-dark-border h-full">
               <CardHeader>
                 <CardTitle className="text-foreground dark:text-white flex items-center">
-                  <User className="h-5 w-5 text-primary mr-2" />
-                  Your Takeaways
+                  <MessageSquare className="h-5 w-5 text-blue-500 mr-2" />
+                  Discussion
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={takeawayText}
-                  onChange={(e) => setTakeawayText(e.target.value)}
-                  placeholder="Add your thoughts and insights..."
-                  className="min-h-[300px] resize-none bg-background dark:bg-dark-surface border-border dark:border-dark-border text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-400"
-                />
-                <div className="mt-4">
-                  <Button
-                    size="sm"
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                  >
-                    Save Changes
-                  </Button>
-                </div>
+              <CardContent className="p-0">
+                <ChatPanel contentId={parseInt(id!)} />
               </CardContent>
             </Card>
-          </div>
-
-          {/* Chat Column */}
-          <div className="lg:col-span-4">
-            <ChatPanel contentId={parseInt(id!)} />
           </div>
 
         </div>
